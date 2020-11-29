@@ -79,7 +79,9 @@ public:
     }
 
     size_t n_edges;
+    do {
     std::getline(*file, line);
+    } while (line.size() == 0);
     ++line_nb;
 
     int n_vertices;
@@ -225,6 +227,23 @@ public:
    * \param[in] points pre-initialized tensor holding points
    */
   bool sample(const int N, PointCloud &point_cloud) const;
+
+  // Move the mesh to origin
+  void move_to_origin() {
+	  float x_sum = 0;
+	  float y_sum = 0;
+	  float z_sum = 0;
+	  for (const auto &v : vertices) {
+		  x_sum += v[0];
+		  y_sum += v[1];
+		  z_sum += v[2];
+	  }
+	  auto v_count = static_cast<float>(vertices.size());
+          Eigen::Vector3f object_center(x_sum / v_count, y_sum / v_count, z_sum / v_count);
+	  for (auto &v : vertices) {
+		  v -= object_center;
+	  }
+  }
 
 private:
 
@@ -577,6 +596,7 @@ int main(int argc, char** argv) {
 
     Mesh input_mesh;
     bool success = Mesh::from_off(input_file.string(), input_mesh);
+    input_mesh.move_to_origin();
 
     if (!success) {
       std::cout << "Could not read " << input_file << "." << std::endl;
@@ -586,6 +606,7 @@ int main(int argc, char** argv) {
     if (reference_file.extension().string() == ".off") {
       Mesh reference_mesh;
       success = Mesh::from_off(reference_file.string(), reference_mesh);
+      reference_mesh.move_to_origin();
 
       if (!success) {
         std::cout << "Could not read " << reference_file << "." << std::endl;
